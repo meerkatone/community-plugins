@@ -26,24 +26,78 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run Validator
+        id: validator
         if: steps.check-label.outputs.skipRemainingSteps != 'true'
-        run: python3 validate_json.py ${{ secrets.M_GITHUB_TOKEN }}
         env:
           ISSUE_CONTENT: ${{ github.event.issue.body }}
+          M_GITHUB_TOKEN: ${{ secrets.M_GITHUB_TOKEN }}
+        run: |
+          set +e
+          python3 validate_json.py "$M_GITHUB_TOKEN" 2>&1 | tee validator-output.txt
+          status=${PIPESTATUS[0]}
+          delimiter="VALIDATOR_OUTPUT_$(date +%s%N)"
+          {
+            echo "output<<${delimiter}"
+            # Only the last 50 lines, so a runaway traceback can't blow the
+            # 65k step-output limit or bury the actual error in the comment.
+            tail -n 50 validator-output.txt
+            echo "${delimiter}"
+          } >> "$GITHUB_OUTPUT"
+          exit $status
 
       - name: Comment
         if: (steps.check-label.outputs.skipRemainingSteps != 'true') && (failure())
         uses: actions/github-script@v9
+        env:
+          VALIDATOR_OUTPUT: ${{ steps.validator.outputs.output }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
           script: |
+            // Everything below is published to a public issue comment, where
+            // Actions' secret masking does NOT apply (it only covers logs).
+            // So: allow-list the validator's own structured lines, redact
+            // anything token-shaped, and neutralize backticks -- both the repo
+            // string (from the issue body) and the release tag (from the
+            // submitter's own repo) are attacker-controlled and may contain
+            // ``` sequences that would break out of the code fence.
+            const redact = (s) => s
+              .replace(/gh[pousr]_[A-Za-z0-9]{16,}/g, '[redacted]')
+              .replace(/github_pat_[A-Za-z0-9_]{16,}/g, '[redacted]');
+
+            const output = (process.env.VALIDATOR_OUTPUT || '')
+              .split('\n')
+              .filter((line) => /^(OK|Error|ERROR|Warning):/.test(line.trim()))
+              .map((line) => redact(line).replace(/`/g, "'").slice(0, 300))
+              .slice(0, 20)
+              .join('\n')
+              .trim();
+
+            const details = output
+              ? ['Here is what the validator reported:', '', '```', output, '```'].join('\n')
+              : `The validator failed without a recognizable error message. See the [workflow run](${process.env.RUN_URL}) for details.`;
+
+            const body = [
+              'Sorry, automated validation of this plugin submission failed.',
+              '',
+              details,
+              '',
+              'Things the validator checks:',
+              '',
+              '* The issue body contains a `Repo URL:` line pointing at a public GitHub repository.',
+              '* That repository has a real (non-draft) release.',
+              '* A `plugin.json` exists at the tag of the latest release, and is valid JSON.',
+              '* `plugin.json` has all required fields, and `type`, `api`, `platforms`, and `license` use only supported values.',
+              '',
+              `Full log: [workflow run](${process.env.RUN_URL})`,
+              '',
+              'Once the problem is fixed (and, if needed, a new release is cut), please reopen this issue or open a new one.',
+            ].join('\n');
+
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `Sorry, this repository does not appear to have a valid plugin.json.
-
-              Please ensure it is valid JSON and that you have created an actual release.
-              `
+              body
             })
             await github.rest.issues.addLabels({
               issue_number: context.issue.number,
