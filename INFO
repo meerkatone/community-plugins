@@ -31,7 +31,7 @@ To be displayed in the plugin loader, your `plugin.json` MUST have the following
  - `api` - A list of supported APIs. Currently only `python3` is supported.
  - `license` - A json object with `name` and `text` keys.
  - `description` - This is a short (<50 character) description of the plugin. Maximum 256 characters.
- - `version` - Version string of the form `<major>`, `<major>.<minor>`, or `<major>.<minor>.<patch>`, optionally `v`-prefixed. Pre-release suffixes such as `1.0.0-beta` are not supported. Maximum 16 characters.
+ - `version` - Version string of the form `<major>.<minor>.<patch>`. Maximum 16 characters.
  - `minimumbinaryninjaversion` - An integer _build number_ so instead of `1.1.555` use `555`. `minimumBinaryNinjaVersion` is also accepted.
 
 ### Recommended Fields

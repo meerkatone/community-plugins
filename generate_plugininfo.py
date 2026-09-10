@@ -24,8 +24,10 @@ requiredLicenseKeys = ["name", "text"]
 # Lengths the extension server's columns can hold. Exceeding one makes the plugin
 # fail to import rather than getting truncated.
 maxLengths = {"name": 64, "description": 256, "author": 128, "version": 16}
-# The extension server parses 'version' as <major>[.<minor>[.<patch>]] to sort releases.
-versionPattern = re.compile(r"^v?\d+([.-]\d+)?([.-]\d+)?$")
+# The extension server parses 'version' as <major>[.<minor>[.<patch>]] to sort releases,
+# discarding any -prerelease or +build suffix.
+versionPattern = re.compile(
+	r"^v?\d+([.-]\d+)?([.-]\d+)?(-[0-9A-Za-z][0-9A-Za-z.-]*)?(\+[0-9A-Za-z][0-9A-Za-z.-]*)?$")
 
 def validateList(data, name, validList, optional=False, unknownIsError=True):
 	if name not in data:
