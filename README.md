@@ -33,6 +33,7 @@
 | [binja_sigmaker](https://github.com/apekros/binja_sigmaker)|apekros and Alex3434|Generate and find signatures.|2023-01-29|architecture, binaryview, core, ui|python3|MIT |
 | [BinjaExportTox64dbg](https://github.com/moval0x1/BinjaExportTox64dbg)|moval0x1|Export notations from Binja to x64dbg|2024-02-20|binaryview|python3|MIT |
 | [binjaextras](https://github.com/xorhex/binjaextras)|xorhex|Various features to make windows malware analysis easier.|2026-04-08|helper|python3|MIT |
+| [BinjaString](https://github.com/jdefrancesco/BinjaString)|Joey DeFrancesco|Helper plugin for finding strings that are more likely to matter during reverse engineering.|2026-08-18|helper|python3|MIT |
 | [BinSync](https://github.com/binsync/binsync)|BinSync Team|Adds support for cross-decompiler collab in the BinSync supported decompilers.|2026-06-07|sync|python3|BSD 2-clause |
 | [Binwalk](https://github.com/kevinmuoz/binwalk-reversing-plugin)|kevinmuoz|This plugin integrates a modern Rust-based version of Binwalk into reversing workflow. It is designed to identify and extract files or data embedded within other binaries, with a focus on firmware analysis.|2026-02-21|helper|python3|Apache 2.0 |
 | [BinYars](https://github.com/xorhex/BinYars-SideWidget)|xorhex|BinYars provides YARA-X scanning ability and a rule editor.  When running commerical or higher Binary Ninja edition, it can sort files in the project view.|2026-04-14|helper|python3, rust|MIT |
@@ -52,6 +53,7 @@
 | [Calltree](https://github.com/elbiazo/calltree)|Eric Biazo|Generates calltree. Alternative view for callgraph|2026-07-04|binaryview, helper, ui|python3|MIT |
 | [capa explorer](https://github.com/xusheng6/capa-explorer-binja)|xusheng6|capa explorer is a Binary Ninja UI plugin that integrates the FLARE team's open-source capa framework with Binary Ninja|2026-07-22|analysis, helper|python3|Apache 2.0 |
 | [Char Arrays](https://github.com/elbee-cyber/analyze_char_arrays)|elbee|Displays char arrays by analyzing their use in functions|2023-01-18|binaryview, helper|python3|MIT |
+| [CheckSecBN](https://github.com/NicoleFaye/CheckSecBN)|NicoleFaye|A static, Narly/checksec-style exploit-mitigation reporter for Binary Ninja.|2026-08-25|helper|python3|MIT |
 | [Class Informer](https://github.com/NightfallCT/Class-Informer-Binary-Ninja)|NightfallCT|Reconstructs C++ class hierarchies from MSVC RTTI|2026-04-30|analysis|python3|MIT |
 | [ClassyPP](https://github.com/CySHell/ClassyPP)|CyShell|Parse and extract class information from MSVC x86 32\64 bit C++ binaries.|2023-06-06|binaryview|python3|MIT |
 | [Clean Tricks](https://github.com/janbbeck/CleanTricks)|Jan Beck|This plugin removes some simple known obfuscation techniques to cut down on the tedium.|2020-06-08|architecture, binaryview, core, helper, ui|python3|MIT |
@@ -89,6 +91,7 @@
 | [Format String Finder](https://github.com/Vasco-jofra/format-string-finder-binja)|jofra|Finds format string vulnerabilities|2019-07-15|helper|python3|MIT |
 | [Frida](https://github.com/chame1eon/binaryninja-frida)|Chame1eon|A plugin to integrate the Frida dynamic instrumentation toolkit into Binary Ninja.|2020-06-01|helper|python3|MIT |
 | [Frinja](https://github.com/dzervas/frinja)|Dimitris Zervas|Frida plugin for Binary Ninja - continuation of BinRida by @c3r34lk1ll3r|2024-04-10|helper|python3|MIT |
+| [FTAB Container Transform](https://github.com/lukbukkit/ftab-transform)|Lukas Arnold|Provides container transforms for firmware in Apple's FTAB format.|2026-09-09|binaryview|python3|MIT |
 | [Function ABI](https://github.com/whitequark/binja_function_abi)|whitequark|A plugin that adds a GUI for changing function ABI.|2019-11-22|ui|python2, python3|BSD-0-clause |
 | [Fuzzable](https://github.com/ex0dus-0x/fuzzable)|ex0dus-0x|Framework for Automating Fuzzable Target Discovery with Static Analysis|2023-11-22|ui|python3|MIT |
 | [Game Boy Loader and Architecture Plugin](https://github.com/icecr4ck/bnGB)|Hugo Porcher (@icecr4ck)|A loader and diassembler for Game Boy ROMs.|2020-11-17|architecture, binaryview|python3|MIT |
@@ -155,6 +158,7 @@
 | [pd-ninja](https://github.com/lockbox/pd-ninja)|lockbox|Playdate Console RE utilities|2023-03-01|helper|python3|MIT |
 | [permap](https://github.com/redballoonsecurity/permap)|jepson2k, dannyp303|Supports loading .per files into Binary Ninja.|2024-12-18|helper|python3|Apache-2.0 |
 | [peutils](https://github.com/404d/peutils)|404'd|Binary Ninja plugin providing various niche utilities for working with PE binaries|2020-12-12|helper|python3|MIT |
+| [PIC16](https://github.com/RevPanda/binaryninja-pic16)|RevPanda|PIC16 architecture plugin for Binary Ninja|2026-09-04|architecture|python3|MIT |
 | [PowerPC VLE Extension](https://github.com/Martyx00/PowerPC-VLE-Extension)|Martin Petran|PowerPC VLE support via architecture extension.|2025-03-03|architecture|cpp|Apache-2.0 |
 | [Pseudo C Dump](https://github.com/AsherDLL/PCDump-bn)|Asher Davila L.|Binary Ninja plugin to dump the Pseudo C generated by Binja into a folder.|2023-01-28|helper|python3|Apache-2.0 |
 | [PSVitaLoader](https://github.com/computerman00/BinaryNinja-PSVitaLoader)|computerman00|PS Vita ELF/PRX2 loader plugin|2024-09-19|helper|python3|MIT |
