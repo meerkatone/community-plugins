@@ -26,27 +26,33 @@ To install plugins, you can either use the Plugin Manager in the UI or clone the
 
 To be displayed in the plugin loader, your `plugin.json` MUST have the following fields:
 
- - `pluginmetadataversion` - The current version is the integer `2`
- - `name` - Good names do not use "Binary Ninja" or "Binja" neither do they use the words "plugin" or "extension". So instead of "Binja 6502 Architecture Plugin" simply use "6502 Architecture"
- - `author` - Your name, handle, or company name.
- - `api` - A list of supported architectures. Currently only `python3` is supported. 
+ - `name` - Good names do not use "Binary Ninja" or "Binja" neither do they use the words "plugin" or "extension". So instead of "Binja 6502 Architecture Plugin" simply use "6502 Architecture". Maximum 64 characters.
+ - `author` - Your name, handle, or company name. Maximum 128 characters.
+ - `api` - A list of supported APIs. Currently only `python3` is supported.
  - `license` - A json object with `name` and `text` keys.
- - `description` - This is a short (<50 character) description of the plugin.
- - `version` - Version string
- - `minimumBinaryNinjaVersion` - An integer _build number_ so instead of `1.1.555` use `555`.
- - `platforms` - A list of strings one for each supported platform. Valid platforms are `Darwin`, `Linux`, and `Windows`
+ - `description` - This is a short (<50 character) description of the plugin. Maximum 256 characters.
+ - `version` - Version string of the form `<major>`, `<major>.<minor>`, or `<major>.<minor>.<patch>`, optionally `v`-prefixed. Pre-release suffixes such as `1.0.0-beta` are not supported. Maximum 16 characters.
+ - `minimumbinaryninjaversion` - An integer _build number_ so instead of `1.1.555` use `555`. `minimumBinaryNinjaVersion` is also accepted.
 
 ### Recommended Fields
 
- - `longdescription` - A longer Markdown formatted description of the plugin including hyperlinks and images as needed. This will be shown in the plugin preview in the plugin manager and images are highly recommended. If not specified or if empty, the [README file](https://github.com/Vector35/community-plugins/blob/master/generate_index.py#L104) from your repository will be automatically used instead.
- - `type` - A list of strings of the following types: `core`, `ui`, `architecture`, `binaryview`, and `helper`.
+ - `pluginmetadataversion` - The current version is the integer `2`, which is assumed if the field is absent.
+ - `longdescription` - A longer Markdown formatted description of the plugin including hyperlinks and images as needed. This will be shown in the plugin preview in the plugin manager and images are highly recommended. If not specified or if empty, the README file from your repository will be automatically used instead.
+ - `platforms` - A list of strings one for each supported platform. Valid platforms are `Darwin`, `Linux`, and `Windows`.
+ - `type` - A list of strings of the following types: `core`, `ui`, `architecture`, `binaryview`, `helper`, and `sync`.
    - `helper` - Plugin that adds some base functionality to Binary Ninja. Most plugins will be of this type.
    - `ui` - The plugin extends the UI is some way.
    - `architecture` - The plugin adds an architecture (e.g. `x86`, `ARM`, `MIPS`).
    - `binaryview` - The plugin adds a new BinaryView (e.g. `PE`, `MachO`, `ELF`).
    - `core` - Plugin that extends the core's analysis. Your plugin probably isn't one of these.
    - `sync` - A plugin that synchronizes data with an external tool.
- - `installinstructions` - A json object with keys for each supported platform listed in `platforms` and text Markdown formatted.
+
+### Ignored Fields
+
+These are accepted but no longer used, so there is no need to set them:
+
+ - `installinstructions` - The plugin manager stopped showing an install instructions tab in 4.1; put anything a user needs to know in `longdescription` or your README instead.
+ - `dependencies` - Python dependencies always come from your `requirements.txt`.
 
 ## License
 

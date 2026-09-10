@@ -86,7 +86,7 @@ jobs:
               '* The issue body contains a `Repo URL:` line pointing at a public GitHub repository.',
               '* That repository has a real (non-draft) release.',
               '* A `plugin.json` exists at the tag of the latest release, and is valid JSON.',
-              '* `plugin.json` has all required fields, and `type`, `api`, `platforms`, and `license` use only supported values.',
+              '* `plugin.json` has all required fields, a parseable `version`, and a `license` object with `name` and `text`.',
               '',
               `Full log: [workflow run](${process.env.RUN_URL})`,
               '',

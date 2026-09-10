@@ -6,19 +6,32 @@ import json
 import argparse
 import os
 import io
+import re
 import datetime
 from builtins import input
 
 currentpluginmetadataversion = 2
 
-validPluginTypes = ["core", "ui", "binaryview", "architecture", "helper"]
-validApis = ["python2", "python3"]
+# Types the plugin manager knows how to map to a category. Anything else is ignored
+# rather than rejected, so an unrecognized type is only a warning.
+validPluginTypes = ["core", "ui", "binaryview", "architecture", "helper", "sync"]
+# API names that match a registered scripting provider. A plugin declaring anything
+# else can still be listed, but dependency installation won't find an interpreter.
+validApis = ["python3"]
 validPlatforms = ["Darwin", "Windows", "Linux"]
 requiredLicenseKeys = ["name", "text"]
 
-def validateList(data, name, validList):
+# Lengths the extension server's columns can hold. Exceeding one makes the plugin
+# fail to import rather than getting truncated.
+maxLengths = {"name": 64, "description": 256, "author": 128, "version": 16}
+# The extension server parses 'version' as <major>[.<minor>[.<patch>]] to sort releases.
+versionPattern = re.compile(r"^v?\d+([.-]\d+)?([.-]\d+)?$")
+
+def validateList(data, name, validList, optional=False, unknownIsError=True):
 	if name not in data:
-		print("Warning: '{}' field doesn't exist".format(name))
+		if optional:
+			return True
+		print("Error: '{}' field doesn't exist".format(name))
 		return False
 	elif not isinstance(data[name], list):
 		print("Error: '{}' field isn't a list".format(name))
@@ -26,9 +39,15 @@ def validateList(data, name, validList):
 
 	success = True
 	for item in data[name]:
-		if item not in validList:
-			print("Error: plugin {}: {} not one of {}".format(name, item, validList))
+		if not isinstance(item, str):
+			print("Error: '{}' field must only contain strings".format(name))
 			success = False
+		elif item not in validList:
+			if unknownIsError:
+				print("Error: plugin {}: {} not one of {}".format(name, item, validList))
+				success = False
+			else:
+				print("Warning: plugin {}: {} not one of {}".format(name, item, validList))
 	return success
 
 def validateString(data, name):
@@ -49,7 +68,7 @@ def validateInteger(data, name):
 		return False
 	return True
 
-def validateStringMap(data, name, validKeys, requiredKeys=None):
+def validateStringMap(data, name, validKeys, requiredKeys=None, unknownIsError=True):
 	if name not in data:
 		print("Error: '{}' field doesn't exist.".format(name))
 		return False
@@ -63,36 +82,104 @@ def validateStringMap(data, name, validKeys, requiredKeys=None):
 			if key not in data[name]:
 				print("Error: required subkey '{}' not in {}".format(key, name))
 				success = False
+			elif not isinstance(data[name][key], str):
+				print("Error: subkey '{}' in {} is {} not a string".format(key, name, type(data[name][key])))
+				success = False
+			elif data[name][key] == "":
+				print("Warning: subkey '{}' in {} is empty".format(key, name))
 
 	for key in data[name].keys():
 		if key not in validKeys:
-			print("Error: key '{}' not is not in the set of valid keys {}".format(key, validKeys))
-			success = False
+			if unknownIsError:
+				print("Error: key '{}' not is not in the set of valid keys {}".format(key, validKeys))
+				success = False
+			else:
+				print("Warning: key '{}' in {} is not one of {}; it will be ignored".format(key, name, validKeys))
 
 	return success
 
-def validateRequiredFields(data):
-	success = validateInteger(data, "pluginmetadataversion")
-	if success:
-		if data["pluginmetadataversion"] != currentpluginmetadataversion:
-			print("Error: 'pluginmetadataversion' is not the correct version")
-			success = False
-	else:
-		print("Current version is {}".format(currentpluginmetadataversion))
+def validateMetadataVersion(data):
+	# Every consumer defaults this to the current version when it's missing, so its
+	# absence is only worth a warning; a wrong value means the plugin gets skipped.
+	if "pluginmetadataversion" not in data:
+		print("Warning: 'pluginmetadataversion' field doesn't exist, {} will be assumed".format(currentpluginmetadataversion))
+		return True
+	if not validateInteger(data, "pluginmetadataversion"):
+		return False
+	if data["pluginmetadataversion"] != currentpluginmetadataversion:
+		print("Error: 'pluginmetadataversion' is not the correct version, the current version is {}".format(currentpluginmetadataversion))
+		return False
+	return True
 
-	success &= validateString(data, "name")
-	success &= validateList(data, "type", validPluginTypes)
-	success &= validateList(data, "api", validApis)
+def validateVersion(data):
+	if not validateString(data, "version"):
+		return False
+	if versionPattern.fullmatch(data["version"]) is None:
+		print("Error: 'version' {} must be of the form <major>, <major>.<minor>, or <major>.<minor>.<patch>".format(data["version"]))
+		return False
+	return True
+
+def validateMinimumVersion(data):
+	# Either spelling is accepted by the repository generator and the extension server.
+	for name in ("minimumbinaryninjaversion", "minimumBinaryNinjaVersion"):
+		if name not in data:
+			continue
+		if isinstance(data[name], bool) or not isinstance(data[name], int):
+			print("Error: '{}' is {} not an integer build number".format(name, type(data[name])))
+			return False
+		if data[name] < 0:
+			print("Error: '{}' must not be negative".format(name))
+			return False
+		return True
+	print("Error: 'minimumbinaryninjaversion' field doesn't exist.")
+	return False
+
+def validateLengths(data):
+	success = True
+	for name, limit in maxLengths.items():
+		value = data.get(name)
+		if isinstance(value, str) and len(value) > limit:
+			print("Error: '{}' is {} characters, the maximum is {}".format(name, len(value), limit))
+			success = False
+
+	licenseName = data.get("license", {}).get("name") if isinstance(data.get("license"), dict) else None
+	if isinstance(licenseName, str) and len(licenseName) > 128:
+		print("Error: license 'name' is {} characters, the maximum is 128".format(len(licenseName)))
+		success = False
+	return success
+
+def validateLongDescription(data):
+	# Both the repository generator and the extension server fall back to the repo's
+	# README.md when this is missing or too short to be useful.
+	value = data.get("longdescription")
+	if not isinstance(value, str):
+		if value is not None:
+			print("Warning: 'longdescription' is {} not a string and will be ignored".format(type(value)))
+		else:
+			print("Warning: 'longdescription' field doesn't exist, the repository's README.md will be used instead")
+	elif len(value) < 100:
+		print("Warning: 'longdescription' is short, the repository's README.md will be used instead")
+
+def validateRequiredFields(data):
+	# Required: the extension server or the client fails without these.
+	success = validateString(data, "name")
 	success &= validateString(data, "description")
-	success &= validateString(data, "longdescription")
-	success &= validateStringMap(data, "license", requiredLicenseKeys, requiredLicenseKeys)
-	validPlatformList = validateList(data, "platforms", validPlatforms)
-	success &= validPlatformList
-	if "installinstructions" in data:
-		success &= validateStringMap(data, "installinstructions", validPlatforms, list(data["platforms"]) if validPlatformList else None)
-	success &= validateString(data, "version")
 	success &= validateString(data, "author")
-	success &= validateInteger(data, "minimumbinaryninjaversion")
+	success &= validateVersion(data)
+	success &= validateList(data, "api", validApis, unknownIsError=False)
+	success &= validateStringMap(data, "license", requiredLicenseKeys, requiredLicenseKeys, unknownIsError=False)
+	success &= validateMinimumVersion(data)
+	success &= validateLengths(data)
+
+	# Optional: filled in with a default when absent.
+	success &= validateMetadataVersion(data)
+	success &= validateList(data, "type", validPluginTypes, optional=True, unknownIsError=False)
+	success &= validateList(data, "platforms", validPlatforms, optional=True, unknownIsError=False)
+	validateLongDescription(data)
+
+	# 'installinstructions' and 'dependencies' are deliberately unchecked: the plugin
+	# manager has not shown install instructions since 4.1, and dependencies always
+	# come from requirements.txt.
 	return success
 
 def getCombinationSelection(validList, prompt, maxItems=None):
@@ -167,10 +254,6 @@ def generatepluginmetadata():
 	data["license"]["text"] = "Copyright {year} {holder}\n\n".format(year=year, holder=holder) + data["license"]["text"]
 	data["platforms"] = getCombinationSelection(validPlatforms, "Which platforms are supported? ")
 
-	data["installinstructions"] = {}
-	for platform in data["platforms"]:
-		print("Enter Markdown formatted installation directions for the following platform: ")
-		data["installinstructions"][platform] = input("{}: ".format(platform))
 	data["version"] = input("Enter the version string for this plugin. ")
 	data["minimumbinaryninjaversion"] = int(input("Enter the minimum build number that you've successfully tested this plugin with: "))
 	return data
